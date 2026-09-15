@@ -271,9 +271,9 @@ function generateQuestion() {
       maxA = 15;                              // Base 2 à 16
       maxK = 5;                               // Exposant 2 à 6
     } else {
-      n = Math.floor(Math.random() * 20) + 7; // Modulo 7 à 18
-      maxA = 40;                              // Base 2 à 41
-      maxK = 10;                              // Exposant 2 à 11
+      n = Math.floor(Math.random() * 40) + 7; // Modulo 7 à 18
+      maxA = 1000;                              // Base 2 à 41
+      maxK = 30;                              // Exposant 2 à 11
     }
 
     const a = Math.floor(Math.random() * maxA) + 2;
@@ -319,10 +319,11 @@ function checkAnswerMode1(userAnswer) {
     showFeedback('Correct !', true);
   } else {
     const diff = currentQuestion.a - currentQuestion.b;
+    
     showFeedback(`Faux ! (${currentQuestion.a} - ${currentQuestion.b} = ${diff}, qui ${diff % currentQuestion.n === 0 ? 'est' : "n'est pas"} divisible par ${currentQuestion.n})`, false);
   }
 
-  setTimeout(generateQuestion, 1500);
+  setTimeout(generateQuestion, 400);
 }
 
 // 12. Logique de validation Mode 2
@@ -341,7 +342,7 @@ function checkAnswerMode2() {
     showFeedback(`Faux ! La réponse attendue était ${currentQuestion.expectedC}.`, false);
   }
 
-  setTimeout(generateQuestion, 2000);
+  setTimeout(generateQuestion, 400);
 }
 
 // 13. Gestion du changement de mode et de difficulté
