@@ -1,0 +1,7 @@
+PGCD entre 40 et 43 
+43 = 1  * 40 + 3 
+40 = 13 *  3 + 1 
+3 =  3  *  1 + 0 
+a =  n  *  b + k 
+le plus grand diviseur est 1 ( b ) 
+

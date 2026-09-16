@@ -5,7 +5,7 @@ var h1 = document.createElement('h1');
 let correctCount = 0;
 let totalCount = 0;
 let currentQuestion = null;
-let currentMode = 'affirmation'; // 'affirmation' ou 'calcul'
+let currentMode = 'affirmation'; // 'affirmation', 'calcul', ou 'pgcd'
 let currentDifficulty = 'facile'; // 'facile', 'moyen', 'difficile'
 
 // Injection des styles globaux
@@ -25,7 +25,7 @@ globalStyles.textContent = `
   
   .game-container {
     width: 100%;
-    max-width: 440px;
+    max-width: 460px;
     padding: 24px;
     border: 1px solid #e5e7eb;
     border-radius: 16px;
@@ -44,8 +44,8 @@ globalStyles.textContent = `
       font-size: 18px !important;
     }
     .mode-btn, .diff-btn {
-      padding: 6px 10px !important;
-      font-size: 12px !important;
+      padding: 6px 8px !important;
+      font-size: 11px !important;
     }
     .action-btn {
       padding: 12px 16px !important;
@@ -57,7 +57,7 @@ document.head.appendChild(globalStyles);
 // Helper pour styliser les boutons
 const styleBtn = (btn, category = 'action') => {
   btn.classList.add(`${category}-btn`);
-  btn.style.padding = '8px 14px';
+  btn.style.padding = '8px 12px';
   btn.style.cursor = 'pointer';
   btn.style.borderRadius = '8px';
   btn.style.border = '1px solid #d1d5db';
@@ -82,11 +82,11 @@ h1.style.margin = '16px 0';
 h1.style.fontWeight = '600';
 h1.style.lineHeight = '1.4';
 
-// 4. Sélecteur de mode (Vrai/Faux vs Calcul)
+// 4. Sélecteur de mode (Vrai/Faux vs Calcul vs PGCD)
 const modeSelector = document.createElement('div');
 modeSelector.style.marginBottom = '12px';
 modeSelector.style.display = 'flex';
-modeSelector.style.gap = '8px';
+modeSelector.style.gap = '6px';
 modeSelector.style.justifyContent = 'center';
 
 const btnMode1 = document.createElement('button');
@@ -97,8 +97,13 @@ const btnMode2 = document.createElement('button');
 btnMode2.textContent = 'Calcul (a^k)';
 styleBtn(btnMode2, 'mode');
 
+const btnMode3 = document.createElement('button');
+btnMode3.textContent = 'PGCD';
+styleBtn(btnMode3, 'mode');
+
 modeSelector.appendChild(btnMode1);
 modeSelector.appendChild(btnMode2);
+modeSelector.appendChild(btnMode3);
 
 // 4b. Sélecteur de difficulté (Facile / Moyen / Difficile)
 const diffSelector = document.createElement('div');
@@ -156,16 +161,16 @@ btnNo.style.color = '#991b1b';
 mode1Box.appendChild(btnYes);
 mode1Box.appendChild(btnNo);
 
-// 7. Zone Mode 2 (Calcul direct)
-const mode2Box = document.createElement('div');
-mode2Box.style.display = 'none';
-mode2Box.style.gap = '8px';
-mode2Box.style.justifyContent = 'center';
-mode2Box.style.width = '100%';
+// 7. Zone des Modes Saisie (Calcul & PGCD)
+const inputBox = document.createElement('div');
+inputBox.style.display = 'none';
+inputBox.style.gap = '8px';
+inputBox.style.justifyContent = 'center';
+inputBox.style.width = '100%';
 
 const input = document.createElement('input');
 input.type = 'number';
-input.placeholder = 'Reste C...';
+input.placeholder = 'Réponse...';
 input.style.padding = '10px 12px';
 input.style.borderRadius = '8px';
 input.style.border = '1px solid #d1d5db';
@@ -189,8 +194,8 @@ btnSubmit.style.backgroundColor = '#4f46e5';
 btnSubmit.style.color = '#ffffff';
 btnSubmit.style.borderColor = '#4f46e5';
 
-mode2Box.appendChild(input);
-mode2Box.appendChild(btnSubmit);
+inputBox.appendChild(input);
+inputBox.appendChild(btnSubmit);
 
 // 8. Zone des retours d'information
 const feedback = document.createElement('div');
@@ -207,11 +212,11 @@ container.appendChild(diffSelector);
 container.appendChild(h1);
 container.appendChild(score);
 container.appendChild(mode1Box);
-container.appendChild(mode2Box);
+container.appendChild(inputBox);
 container.appendChild(feedback);
 document.body.appendChild(container);
 
-// Helper mathématique (exponentiation modulaire)
+// Helpers mathématiques
 function powerMod(base, exp, mod) {
   let res = 1;
   base = base % mod;
@@ -223,6 +228,17 @@ function powerMod(base, exp, mod) {
   return res;
 }
 
+function gcd(a, b) {
+  a = Math.abs(a);
+  b = Math.abs(b);
+  while (b) {
+    const t = b;
+    b = a % b;
+    a = t;
+  }
+  return a;
+}
+
 // 10. Générateur de questions adaptatif
 function generateQuestion() {
   feedback.style.display = 'none';
@@ -232,13 +248,13 @@ function generateQuestion() {
   if (currentMode === 'affirmation') {
     let n, maxA;
     if (currentDifficulty === 'facile') {
-      n = Math.floor(Math.random() * 5) + 2;   // Modulo 2 à 6
+      n = Math.floor(Math.random() * 5) + 2;
       maxA = 50;
     } else if (currentDifficulty === 'moyen') {
-      n = Math.floor(Math.random() * 10) + 5;  // Modulo 5 à 14
+      n = Math.floor(Math.random() * 10) + 5;
       maxA = 200;
     } else {
-      n = Math.floor(Math.random() * 40) + 10; // Modulo 10 à 29
+      n = Math.floor(Math.random() * 40) + 10;
       maxA = 4000;
     }
 
@@ -260,20 +276,21 @@ function generateQuestion() {
     btnNo.disabled = false;
     btnYes.style.opacity = '1';
     btnNo.style.opacity = '1';
-  } else {
+
+  } else if (currentMode === 'calcul') {
     let n, maxA, maxK;
     if (currentDifficulty === 'facile') {
-      n = Math.floor(Math.random() * 6) + 3;  // Modulo 3 à 8
-      maxA = 6;                               // Base 2 à 7
-      maxK = 3;                               // Exposant 2 à 4
+      n = Math.floor(Math.random() * 6) + 3;
+      maxA = 6;
+      maxK = 3;
     } else if (currentDifficulty === 'moyen') {
-      n = Math.floor(Math.random() * 10) + 5;  // Modulo 5 à 12
-      maxA = 15;                              // Base 2 à 16
-      maxK = 5;                               // Exposant 2 à 6
+      n = Math.floor(Math.random() * 10) + 5;
+      maxA = 15;
+      maxK = 5;
     } else {
-      n = Math.floor(Math.random() * 40) + 7; // Modulo 7 à 18
-      maxA = 1000;                              // Base 2 à 41
-      maxK = 30;                              // Exposant 2 à 11
+      n = Math.floor(Math.random() * 40) + 7;
+      maxA = 1000;
+      maxK = 30;
     }
 
     const a = Math.floor(Math.random() * maxA) + 2;
@@ -282,6 +299,30 @@ function generateQuestion() {
 
     currentQuestion = { a, k, n, expectedC };
     h1.textContent = `Trouver C ≡ ${a}^${k} [${n}]`;
+    input.placeholder = 'Reste C...';
+    input.value = '';
+    input.disabled = false;
+    btnSubmit.disabled = false;
+    btnSubmit.style.opacity = '1';
+    input.focus();
+
+  } else if (currentMode === 'pgcd') {
+    let min, max;
+    if (currentDifficulty === 'facile') {
+      min = 12; max = 75;
+    } else if (currentDifficulty === 'moyen') {
+      min = 40; max = 250;
+    } else {
+      min = 100; max = 1200;
+    }
+
+    const a = Math.floor(Math.random() * (max - min)) + min;
+    const b = Math.floor(Math.random() * (max - min)) + min;
+    const expectedPGCD = gcd(a, b);
+
+    currentQuestion = { a, b, expectedPGCD };
+    h1.textContent = `PGCD(${a}, ${b}) = ?`;
+    input.placeholder = 'PGCD...';
     input.value = '';
     input.disabled = false;
     btnSubmit.disabled = false;
@@ -319,27 +360,35 @@ function checkAnswerMode1(userAnswer) {
     showFeedback('Correct !', true);
   } else {
     const diff = currentQuestion.a - currentQuestion.b;
-    
     showFeedback(`Faux ! (${currentQuestion.a} - ${currentQuestion.b} = ${diff}, qui ${diff % currentQuestion.n === 0 ? 'est' : "n'est pas"} divisible par ${currentQuestion.n})`, false);
   }
 
   setTimeout(generateQuestion, 400);
 }
 
-// 12. Logique de validation Mode 2
-function checkAnswerMode2() {
-  if (input.value.trim() === '' || currentQuestion.expectedC === undefined) return;
+// 12. Logique de validation Modes Saisie (Calcul & PGCD)
+function checkAnswerInput() {
+  if (input.value.trim() === '') return;
   totalCount++;
   const userAnswer = parseInt(input.value, 10);
   input.disabled = true;
   btnSubmit.disabled = true;
   btnSubmit.style.opacity = '0.6';
 
-  if (userAnswer === currentQuestion.expectedC) {
-    correctCount++;
-    showFeedback('Correct !', true);
-  } else {
-    showFeedback(`Faux ! La réponse attendue était ${currentQuestion.expectedC}.`, false);
+  if (currentMode === 'calcul') {
+    if (userAnswer === currentQuestion.expectedC) {
+      correctCount++;
+      showFeedback('Correct !', true);
+    } else {
+      showFeedback(`Faux ! La réponse attendue était ${currentQuestion.expectedC}.`, false);
+    }
+  } else if (currentMode === 'pgcd') {
+    if (userAnswer === currentQuestion.expectedPGCD) {
+      correctCount++;
+      showFeedback('Correct !', true);
+    } else {
+      showFeedback(`Faux ! PGCD(${currentQuestion.a}, ${currentQuestion.b}) = ${currentQuestion.expectedPGCD}.`, false);
+    }
   }
 
   setTimeout(generateQuestion, 400);
@@ -348,25 +397,32 @@ function checkAnswerMode2() {
 // 13. Gestion du changement de mode et de difficulté
 function switchMode(newMode) {
   currentMode = newMode;
+  const modes = [
+    { id: 'affirmation', btn: btnMode1 },
+    { id: 'calcul', btn: btnMode2 },
+    { id: 'pgcd', btn: btnMode3 }
+  ];
+
+  modes.forEach(m => {
+    if (m.id === newMode) {
+      m.btn.style.backgroundColor = '#4f46e5';
+      m.btn.style.color = '#ffffff';
+      m.btn.style.borderColor = '#4f46e5';
+    } else {
+      m.btn.style.backgroundColor = '#ffffff';
+      m.btn.style.color = '#374151';
+      m.btn.style.borderColor = '#d1d5db';
+    }
+  });
+
   if (newMode === 'affirmation') {
     mode1Box.style.display = 'flex';
-    mode2Box.style.display = 'none';
-    btnMode1.style.backgroundColor = '#4f46e5';
-    btnMode1.style.color = '#ffffff';
-    btnMode1.style.borderColor = '#4f46e5';
-    btnMode2.style.backgroundColor = '#ffffff';
-    btnMode2.style.color = '#374151';
-    btnMode2.style.borderColor = '#d1d5db';
+    inputBox.style.display = 'none';
   } else {
     mode1Box.style.display = 'none';
-    mode2Box.style.display = 'flex';
-    btnMode2.style.backgroundColor = '#4f46e5';
-    btnMode2.style.color = '#ffffff';
-    btnMode2.style.borderColor = '#4f46e5';
-    btnMode1.style.backgroundColor = '#ffffff';
-    btnMode1.style.color = '#374151';
-    btnMode1.style.borderColor = '#d1d5db';
+    inputBox.style.display = 'flex';
   }
+
   generateQuestion();
 }
 
@@ -392,11 +448,12 @@ function switchDifficulty(newDiff) {
 // 14. Écouteurs d'événements
 btnMode1.addEventListener('click', () => switchMode('affirmation'));
 btnMode2.addEventListener('click', () => switchMode('calcul'));
+btnMode3.addEventListener('click', () => switchMode('pgcd'));
 btnYes.addEventListener('click', () => checkAnswerMode1(true));
 btnNo.addEventListener('click', () => checkAnswerMode1(false));
-btnSubmit.addEventListener('click', checkAnswerMode2);
+btnSubmit.addEventListener('click', checkAnswerInput);
 input.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') checkAnswerMode2();
+  if (e.key === 'Enter') checkAnswerInput();
 });
 
 // 15. Démarrage de l'application
